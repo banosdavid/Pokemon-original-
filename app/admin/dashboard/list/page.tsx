@@ -1,132 +1,131 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { PokemonList } from '@/components/pokemon/PokemonList'; // Asegúrate de que PokemonList esté exportado correctamente
-import { usePokemon } from '@/lib/hooks/usePokemon'; // Hook para obtener los Pokémon
-import Loading from "@/components/loading"; // Correcta si está en el directorio correcto
-import { PokemonDetails, Pokemon } from "@lib/types"; // Importar ambos tipos: Pokemon y PokemonDetails
-
-// Enum para manejar los tipos de error
-enum FetchError {
-  NetworkError = "NetworkError",
-  DataError = "DataError",
-}
+import { PokemonTable } from '@/components/pokemon/PokemonTable';
+import { PokemonSearch } from '@/components/pokemon/PokemonSearch';
+import Loading from '@/components/loading';
+import { Button } from '@/components/ui/button';
+import { usePokemon } from '@/lib/hooks/usePokemon';
+import { Label } from '@/components/ui/label';
 
 export default function PokemonListPage() {
-  const { pokemon, isLoading, error } = usePokemon(); // Llamada al hook para obtener los datos de los Pokémon
-  
-  const [currentPage, setCurrentPage] = useState(1); // Página actual
-  const [totalPages, setTotalPages] = useState(1); // Total de páginas
-  const [pokemonData, setPokemonData] = useState<Pokemon[]>([]); // Pokémon a mostrar en la página, ahora es un array de Pokemon
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [selectedType, setSelectedType] = useState('all'); // Tipo seleccionado para el filtro
+  const { pokemon, isLoading } = usePokemon();
+  const [totalItems, setTotalItems] = useState(1); 
 
-  // Asegurarse de que 'pokemon' sea válido antes de actualizar el estado
+  // Calcular el total de páginas y manejar cambios en las filas por página
   useEffect(() => {
     if (pokemon) {
-      // Mapear PokemonDetails[] a Pokemon[] e incluir 'description'
-
-
-      setPokemonData(pokemon); // Actualiza el estado con los datos transformados
-      setTotalPages(Math.ceil(pokemon.length / 20)); // Calcula el número de páginas
+      setTotalPages(Math.ceil(pokemon.length / rowsPerPage));
+      setTotalItems(pokemon.length); // Actualizamos el total de elementos
     }
-  }, [pokemon]);
+  }, [pokemon, rowsPerPage]);
 
-  // Manejar el cambio de página
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page); // Actualiza la página actual
-  };
+  // Filtrar Pokémon por tipo seleccionado
+  const filteredPokemon = pokemon?.filter((p) =>
+    selectedType === 'all' || p.types.includes(selectedType)
+  ) || [];
 
-  // Cargar la página actual de Pokémon
-  const currentPokemonDatePage = pokemonData.slice((currentPage - 1) * 20, currentPage * 20);
-  return (
-    <div>
-      <h1 className="text-3xl font-bold mb-8">Pokemon List</h1>
-      
-      {isLoading ? (
-        <Loading /> // Muestra el componente de carga mientras se obtienen los Pokémon
-      ) : error ? (
-        <div className="text-red-500">{error}</div> // Si hay un error, se muestra aquí
-      ) : (
-        <PokemonList 
-          pokemons={currentPokemonDatePage} // Pasa los Pokémon para la página actual
-          isLoading={isLoading} // Pasa el estado de carga
-          currentPage={currentPage} // Página actual
-          total={pokemonData.length} // Total de Pokémon disponibles
-          totalPages={totalPages} // Total de páginas
-          onPageChange={handlePageChange} // Función para cambiar de página
-        />
-      )}
-    </div>
+  // Obtener los Pokémon de la página actual
+  const currentPokemonDataPage = filteredPokemon.slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
   );
-}
 
-export function PokemonPage() {
-  const [loading, setLoading] = useState(true);
-  const [pokemon, setPokemon] = useState<PokemonDetails | null>(null); // Cambié el tipo a PokemonDetails por claridad
-  const [error, setError] = useState<string | null>(null); // Mejor control de los errores
-  
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const response = await fetch("https://pokeapi.co/api/v2/pokemon/1");
+  const handlePageChange = (page: number) => setCurrentPage(page);
 
-        if (!response.ok) {
-          throw new Error(FetchError.NetworkError);
-        }
-
-        const data = await response.json();
-
-        // Verificamos si los datos cumplen con la estructura de `PokemonDetails`
-        const pokemonData: PokemonDetails = {
-          name: data.name,
-          height: data.height,
-          weight: data.weight,
-          sprites: {
-            front_default: data.sprites.front_default,
-          },
-          // Añadí una descripción predeterminada por ahora
-          description: data.description || 'No description available', 
-        };
-        setPokemon(pokemonData);
-        setLoading(false);
-      } catch (error) {
-        if (error instanceof Error) {
-          setError("Failed to fetch Pokémon data.");
-        } else {
-          setError("An unknown error occurred.");
-        }
-        setLoading(false);
-      }
-    }
-
-    fetchData();
-
-    return () => {
-      setLoading(true); // Limpiar el estado de carga si el componente se desmonta
-    };
-  }, []);
-
-  // Mostrar el componente de carga mientras se obtiene el Pokémon
-  if (loading) {
-    return <Loading />;
-  }
-
-  // Mostrar error si ocurre algún problema
-  if (error) {
-    return <p className="text-red-500">{error}</p>;
-  }
-
-  // Verificar si pokemon es null antes de acceder a sus propiedades
-  if (!pokemon) {
-    return <p>No Pokémon data found.</p>;
-  }
+  // Calcular el rango de elementos mostrados en la página actual
+  const startItem = (currentPage - 1) * rowsPerPage + 1; // Esto nos dice cuantos elementos hemos mostrado en la pág anterior 
+  const endItem = Math.min(currentPage * rowsPerPage, totalItems);
 
   return (
-    <div>
-      <h1>{pokemon.name}</h1>
-      <img src={pokemon.sprites.front_default} alt={pokemon.name} />
-      <p>Height: {pokemon.height}</p>
-      <p>Weight: {pokemon.weight}</p>
-      <p>Description: {pokemon.description}</p> {/* Mostrar la descripción */}
+    <div className="flex flex-col min-h-screen justify-between">
+      <div>
+        <h1 className="text-3xl font-bold mb-8">Pokemon List</h1>
+
+        {/* Verificación de estado */}
+     {isLoading ? (
+      <Loading />
+      ) : (
+    <>
+    {/* Filtro por tipo */}
+    <PokemonSearch
+      selectedType={selectedType}
+      onTypeChange={setSelectedType}
+      types={Array.from(new Set(pokemon.flatMap((p) => p.types)))}
+    />
+    {/* Tabla de Pokémon */}
+    <PokemonTable pokemon={currentPokemonDataPage} />
+  </>
+)}
+      </div>
+
+      {/* Controles de paginación */}
+      <div className="flex justify-between items-center mt-4">
+        <div className="flex items-center ml-4">
+          <Label htmlFor="rowsPerPage" className="mr-2 font-medium">
+            Rows per Page:
+          </Label>
+          <select
+            id="rowsPerPage"
+            value={rowsPerPage}
+            onChange={(e) => setRowsPerPage(Number(e.target.value))}
+            className="border rounded-md p-2"
+          >
+            <option value={1}>1</option>
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+        </div>
+
+        {/* Muestra el rango de elementos mostrados */}
+        <div className="flex items-center justify-center gap-2">
+          <Label className="text-sm text-muted-foreground">
+            <strong>
+              {startItem}-{endItem}
+            </strong>{" "}
+            of <strong>{totalItems}</strong>
+          </Label>
+        </div>
+
+        <div className="pagination flex justify-center">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            Anterior
+          </Button>
+          {Array.from({ length: Math.min(totalPages, 6) }, (_, index) => {
+            const pageNumber = currentPage + index;
+            return (
+              <Button
+                key={pageNumber}
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(pageNumber)}
+                disabled={pageNumber > totalPages || pageNumber < 1}
+              >
+                {pageNumber}
+              </Button>
+            );
+          })}
+           <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            Siguiente
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

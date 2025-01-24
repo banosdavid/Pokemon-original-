@@ -113,7 +113,7 @@ export default function Dashboard() {
           <CardTitle>Pokemon Type Distribution</CardTitle>
         </CardHeader>
         <CardContent>
-          <PokemonTypeChart pokemon={pokemon || []} /> {/* Asegúrate de pasar un arreglo vacío si no hay datos */}
+          <PokemonTypeChart pokemon={pokemon || []} /> 
         </CardContent>
       </Card>
     </div>
