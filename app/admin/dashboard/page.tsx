@@ -7,7 +7,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { usePokemon } from '@/lib/hooks/usePokemon';
 
 export default function Dashboard() {
-  const { pokemon, isLoading, error } = usePokemon();
+  const { pokemon, isLoading, } = usePokemon();
 
   // Asegurarse de que 'pokemon' sea un arreglo antes de calcular las estadísticas
   const stats = pokemon ? {
@@ -28,14 +28,8 @@ export default function Dashboard() {
         <span className="ml-3 text-lg text-gray-600">Loading Dashboard...</span>
       </div>
     );
-  }
 
-  if (error) {
-    return (
-      <div className="flex justify-center items-center min-h-[400px]">
-        <p className="text-red-500">{error}</p>
-      </div>
-    );
+  
     
   }
 

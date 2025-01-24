@@ -12,7 +12,7 @@ export default function PokemonListPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [selectedType, setSelectedType] = useState('all'); // Tipo seleccionado para el filtro
+  const [selectedType, setSelectedType] = useState('all'); 
   const { pokemon, isLoading } = usePokemon();
   const [totalItems, setTotalItems] = useState(1); 
 
