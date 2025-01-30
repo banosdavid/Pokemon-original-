@@ -1,8 +1,8 @@
 'use client';
 
-import { Pokemon } from '@/lib/types';
-import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Pokemon } from '@/lib/types';
 import {
   Table,
   TableBody,
@@ -43,9 +43,9 @@ export function PokemonTable({ pokemon }: PokemonTableProps) {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => router.push(`/admin/pokemon/${p.id}`)}
+                onClick={() => router.push(`/admin/dashboard/pokemon/${p.id}`)} // Redirige a la página dinámica
               >
-                Edit
+                View Details
               </Button>
             </TableCell>
           </TableRow>

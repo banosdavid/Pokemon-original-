@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { PokemonTable } from '@/components/pokemon/PokemonTable';
-import { PokemonSearch } from '@/components/pokemon/PokemonSearch';
 import Loading from '@/components/loading';
 import { Button } from '@/components/ui/button';
 import { usePokemon } from '@/lib/hooks/usePokemon';
@@ -10,36 +9,31 @@ import { Label } from '@/components/ui/label';
 
 export default function PokemonListPage() {
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [selectedType, setSelectedType] = useState('all'); 
-  const { pokemon, isLoading } = usePokemon();
-  const [totalItems, setTotalItems] = useState(1); 
+  const [totalItems, setTotalItems] = useState(0);
 
-  // Calcular el total de páginas y manejar cambios en las filas por página
-  useEffect(() => {
-    if (pokemon) {
-      setTotalPages(Math.ceil(pokemon.length / rowsPerPage));
-      setTotalItems(pokemon.length); // Actualizamos el total de elementos
-    }
-  }, [pokemon, rowsPerPage]);
+  // Cálculo de offset para la paginación
+  const offset = (currentPage - 1) * rowsPerPage;
 
-  // Filtrar Pokémon por tipo seleccionado
-  const filteredPokemon = pokemon?.filter((p) =>
-    selectedType === 'all' || p.types.includes(selectedType)
-  ) || [];
+  // Obtener los Pokémon de la API con paginación
+  const { pokemon, isLoading, total } = usePokemon(rowsPerPage, offset);
 
-  // Obtener los Pokémon de la página actual
-  const currentPokemonDataPage = filteredPokemon.slice(
-    (currentPage - 1) * rowsPerPage,
-    currentPage * rowsPerPage
-  );
+  // Calcular el total de páginas
+  const totalPages = Math.ceil(total / rowsPerPage);
 
+  // Cambiar de página
   const handlePageChange = (page: number) => setCurrentPage(page);
 
   // Calcular el rango de elementos mostrados en la página actual
-  const startItem = (currentPage - 1) * rowsPerPage + 1; // Esto nos dice cuantos elementos hemos mostrado en la pág anterior 
+  const startItem = (currentPage - 1) * rowsPerPage + 1;
   const endItem = Math.min(currentPage * rowsPerPage, totalItems);
+
+  // useEffect para manejar la paginación dinámica
+  useEffect(() => {
+    if (!isLoading) {
+      setTotalItems(total);  // Actualizamos el total de elementos cuando ya cargó la data
+    }
+  }, [total, isLoading]);
 
   return (
     <div className="flex flex-col min-h-screen justify-between">
@@ -47,20 +41,14 @@ export default function PokemonListPage() {
         <h1 className="text-3xl font-bold mb-8">Pokemon List</h1>
 
         {/* Verificación de estado */}
-     {isLoading ? (
-      <Loading />
-      ) : (
-    <>
-    {/* Filtro por tipo */}
-    <PokemonSearch
-      selectedType={selectedType}
-      onTypeChange={setSelectedType}
-      types={Array.from(new Set(pokemon.flatMap((p) => p.types)))}
-    />
-    {/* Tabla de Pokémon */}
-    <PokemonTable pokemon={currentPokemonDataPage} />
-  </>
-)}
+        {isLoading ? (
+          <Loading />
+        ) : (
+          <>
+            {/* Tabla de Pokémon */}
+            <PokemonTable pokemon={pokemon} />
+          </>
+        )}
       </div>
 
       {/* Controles de paginación */}
@@ -116,7 +104,7 @@ export default function PokemonListPage() {
               </Button>
             );
           })}
-           <Button
+          <Button
             variant="outline"
             size="sm"
             onClick={() => handlePageChange(currentPage + 1)}

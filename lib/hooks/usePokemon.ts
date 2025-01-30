@@ -1,19 +1,19 @@
-'use client';
-
 import { useState, useEffect } from 'react';
 import { Pokemon } from '@/lib/types';
 import { fetchPokemonData } from '@/lib/data';
 
-export function usePokemon() {
+export function usePokemon(limit: number, offset: number) {
   const [pokemon, setPokemon] = useState<Pokemon[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [total, setTotal] = useState(0); // Total de Pokémon
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadPokemon = async () => {
       try {
-        const data = await fetchPokemonData();
-        setPokemon(data);
+        const { results, count } = await fetchPokemonData(limit, offset);
+        setPokemon(results);
+        setTotal(count); // El total de Pokémon
         setError(null);
       } catch (error) {
         console.error('Error loading pokemon:', error);
@@ -24,7 +24,7 @@ export function usePokemon() {
     };
 
     loadPokemon();
-  }, []);
+  }, [limit, offset]);
 
-  return { pokemon, isLoading, error };
+  return { pokemon, isLoading, total, error };
 }

@@ -1,25 +1,23 @@
 import { Pokemon } from './types';
 
+export async function fetchPokemonData(limit: number, offset: number): Promise<{ results: Pokemon[], count: number }> {
+  const url = `https://pokeapi.co/api/v2/pokemon?limit=${limit}&offset=${offset}`;
 
-let pokemonData: Pokemon[] = [];
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
 
-export async function fetchPokemonData() {
-  if (pokemonData.length === 0) {
-    try {
-      // Paso 1: Obtener la lista de URLs de todos los Pokémon
-      const response = await fetch('https://pokeapi.co/api/v2/pokemon?limit=2000'); 
-      const data = await response.json();
-      
-      // Paso 2: Crear un arreglo de promesas para obtener todos los detalles de cada Pokémon
-      const promises = data.results.map((pokemon: { url: string }) =>
-        fetch(pokemon.url).then((res) => res.json())
-      );
+    const promises = data.results.map(async (pokemon: { url: string }) =>
+      fetch(pokemon.url).then((res) => res.json())
+    );
 
-      // Paso 3: Esperar todas las promesas y procesar los resultados
-      const results = await Promise.all(promises);
+    const results = await Promise.all(promises);
 
-      // Paso 4: Mapear los resultados a la estructura deseada
-      pokemonData = results.map((data) => ({
+    // El total de Pokémon
+    const count = data.count;
+
+    return {
+      results: results.map((data) => ({
         id: data.id,
         name: data.name,
         types: data.types.map((t: any) => t.type.name),
@@ -32,12 +30,11 @@ export async function fetchPokemonData() {
           speed: data.stats[5].base_stat,
         },
         imageUrl: data.sprites.other['official-artwork'].front_default,
-      }));
-    } catch (error) {
-      console.error('Error fetching Pokemon data:', error);
-      throw new Error('Failed to fetch Pokemon data');
-    }
+      })),
+      count: count, // El total de Pokémon
+    };
+  } catch (error) {
+    console.error('Error fetching Pokemon data:', error);
+    throw new Error('Failed to fetch Pokemon data');
   }
-
-  return pokemonData;
 }

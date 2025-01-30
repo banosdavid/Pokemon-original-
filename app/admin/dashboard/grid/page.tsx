@@ -2,65 +2,38 @@
 
 import { PokemonCard } from '@/components/pokemon/PokemonCard';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { PokemonSearch } from '@/components/pokemon/PokemonSearch';
 import { usePokemon } from '@/lib/hooks/usePokemon';
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button'; // Asegúrate de tener el botón disponible
-import { Label } from '@/components/ui/label'; 
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 
 export default function PokemonGridPage() {
-  const { pokemon, isLoading, error } = usePokemon();
-  const [selectedType, setSelectedType] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [cardsPerPage, setCardsPerPage] = useState(10);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(1); 
+  const [totalItems, setTotalItems] = useState(0);
 
+  // Cálculo de offset para la paginación
+  const offset = (currentPage - 1) * cardsPerPage;
 
-  // Filtrar Pokémon por tipo seleccionado
-  const filteredPokemon = pokemon.filter((p) => {
-    const matchesType = selectedType === 'all' || p.types.includes(selectedType);
-    return matchesType;
-  });
+  // Obtener los Pokémon de la API con paginación
+  const { pokemon, isLoading, total } = usePokemon(cardsPerPage, offset); // Pasamos limit y offset al hook
 
-  
-  useEffect(() => {
-    if (pokemon) {
-      setTotalPages(Math.ceil(pokemon.length / cardsPerPage));
-      setTotalItems(pokemon.length); // Actualizamos el total de elementos
-    }
-  }, [pokemon, cardsPerPage]);
+  // Calcular el total de páginas
+  const totalPages = Math.ceil(total / cardsPerPage);
 
-
-
-  useEffect(() => {
-    if (filteredPokemon.length > 0) {
-      setTotalPages(Math.ceil(filteredPokemon.length / cardsPerPage)); // Usamos cardsPerPage en lugar de rowsPerPage
-    } else {
-      setTotalPages(1);
-    }
-  }, [filteredPokemon, cardsPerPage]);
-
-  // Obtener los Pokémon de la página actual
-  const currentPokemonDataPage = filteredPokemon.slice(
-    (currentPage - 1) * cardsPerPage,
-    currentPage * cardsPerPage
-  );
-
-
-
+  // Cambiar de página
   const handlePageChange = (page: number) => setCurrentPage(page);
- 
-
 
   // Calcular el rango de elementos mostrados en la página actual
   const startItem = (currentPage - 1) * cardsPerPage + 1;
   const endItem = Math.min(currentPage * cardsPerPage, totalItems);
 
-
-
-
-
+  // useEffect para manejar el total de elementos cuando cargue
+  useEffect(() => {
+    if (!isLoading) {
+      setTotalItems(total);  // Actualizamos el total de elementos cuando ya cargó la data
+    }
+  }, [total, isLoading]);
 
   if (isLoading) {
     return (
@@ -74,40 +47,26 @@ export default function PokemonGridPage() {
   return (
     <div>
       <h1 className="text-3xl font-bold mb-8">Pokemon Grid</h1>
-      
-      {/* Filtro por tipo */}
-      <div className="mb-8">
-        <PokemonSearch
-          selectedType={selectedType}
-          onTypeChange={setSelectedType}
-          types={Array.from(new Set(pokemon.flatMap((p) => p.types)))}
-        />
-      </div>
   
       {/* Mostrar Pokémon en la cuadrícula */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {currentPokemonDataPage.map((pokemon) => (
-          <PokemonCard key={pokemon.id} pokemon={pokemon} />
+        {pokemon.map((pokemon) => (
+          <PokemonCard key={pokemon.name} pokemon={pokemon} />
         ))}
       </div>
-    
-
-
-
-      
-        {/* Controles de Paginación */}
+  
+      {/* Controles de Paginación */}
       <div className="flex justify-between items-center mt-4">
         <div className="flex items-center ml-4">
-          <label htmlFor="cardsPerPage" className="mr-2 font-medium">
+          <Label htmlFor="cardsPerPage" className="mr-2 font-medium">
             Cards per page:
-          </label>
+          </Label>
           <select
             id="cardsPerPage"
             value={cardsPerPage}
             onChange={(e) => setCardsPerPage(Number(e.target.value))}
             className="border rounded-md p-2"
           >
-
             <option value={1}>1</option>
             <option value={10}>10</option>
             <option value={20}>20</option>
@@ -115,8 +74,8 @@ export default function PokemonGridPage() {
             <option value={100}>100</option>
           </select>
         </div>
-         {/* Muestra el rango de elementos mostrados */}
-         <div className="flex items-center justify-center gap-2">
+        {/* Muestra el rango de elementos mostrados */}
+        <div className="flex items-center justify-center gap-2">
           <Label className="text-sm text-muted-foreground">
             <strong>
               {startItem}-{endItem}
@@ -134,8 +93,9 @@ export default function PokemonGridPage() {
           >
             Anterior
           </Button>
-  {/* Muestra las páginas dinámicamente */}
-  {Array.from({ length: Math.min(totalPages, 6) }, (_, index) => {
+
+          {/* Muestra las páginas dinámicamente */}
+          {Array.from({ length: Math.min(totalPages, 6) }, (_, index) => {
             const pageNumber = currentPage + index;
             return (
               <Button
