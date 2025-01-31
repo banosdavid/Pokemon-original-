@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+
 
 interface PokemonDetailProps {
   params: {
@@ -23,9 +23,10 @@ const PokemonDetail: React.FC<PokemonDetailProps> = ({ params }) => {
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [view, setView] = useState<'front' | 'back'>('front');
   const [isShiny, setIsShiny] = useState(false); // Estado para controlar la forma shiny
+  const [pokemonDescription, setPokemonDescription] = useState<string>(""); // Estado para la descripción
+
 
   const router = useRouter();
-
   useEffect(() => {
     const fetchPokemonData = async () => {
       setLoading(true);
@@ -37,6 +38,23 @@ const PokemonDetail: React.FC<PokemonDetailProps> = ({ params }) => {
         }
         const data = await response.json();
         setPokemonData(data);
+  
+        // Comprobamos si la propiedad species está disponible y contiene flavor_text_entries
+        if (data.species) {
+          const speciesResponse = await fetch(data.species.url);
+          const speciesData = await speciesResponse.json();
+  
+          // Verificamos si la propiedad `flavor_text_entries` está disponible
+          if (speciesData.flavor_text_entries?.length > 0) {
+            setPokemonDescription(speciesData.flavor_text_entries[0].flavor_text);
+          } else {
+            setPokemonDescription("Descripción no disponible");
+          }
+        } else {
+          setPokemonDescription("Información de especie no disponible");
+        }
+  
+        // Cargar URL del grito
         setGritoUrl(`https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/latest/${id}.ogg`);
       } catch (error) {
         setError('Error al cargar los datos del Pokémon');
@@ -44,9 +62,10 @@ const PokemonDetail: React.FC<PokemonDetailProps> = ({ params }) => {
         setLoading(false);
       }
     };
-
+  
     fetchPokemonData();
   }, [id]);
+  
 
   const playGrito = () => {
     if (gritoUrl && !audioPlaying) {
@@ -187,19 +206,17 @@ const PokemonDetail: React.FC<PokemonDetailProps> = ({ params }) => {
                       </div>
                     </div>
                   )}
+                  <Card>
+  <CardHeader>
+    <CardTitle>Información adicional del Pokémon</CardTitle>
+  </CardHeader>
+  <CardContent>
+    {/* Mostrar descripción del Pokémon */}
+    <p><strong>Descripción:</strong> {pokemonDescription}</p>
+  </CardContent>
+</Card>
 
-                  {/* Biología y Etimología */}
-                  <div className="mt-6">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Biología y Etimología</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p><strong>Biología:</strong> {pokemonData.species?.flavor_text_entries?.[0]?.flavor_text || 'Información no disponible'}</p>
-                        <p><strong>Etimología:</strong> {pokemonData.species?.etymology || 'Información no disponible'}</p>
-                      </CardContent>
-                    </Card>
-                  </div>
+
 
                   {/* Formas Shiny */}
                   <div className="mt-6 flex space-x-4">
