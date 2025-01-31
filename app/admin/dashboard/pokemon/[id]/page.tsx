@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'; // Asegúrate de importar los componentes de Tabs de ShadCN
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 interface PokemonDetailProps {
   params: {
@@ -21,6 +21,8 @@ const PokemonDetail: React.FC<PokemonDetailProps> = ({ params }) => {
   const [gritoUrl, setGritoUrl] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'types' | 'abilities' | 'stats' | 'moves'>('types');
   const [audioPlaying, setAudioPlaying] = useState(false);
+  const [view, setView] = useState<'front' | 'back'>('front');
+  const [isShiny, setIsShiny] = useState(false); // Estado para controlar la forma shiny
 
   const router = useRouter();
 
@@ -71,14 +73,12 @@ const PokemonDetail: React.FC<PokemonDetailProps> = ({ params }) => {
     setActiveTab(tab);
   };
 
-  const handleScroll = (event: React.MouseEvent) => {
-    const container = document.getElementById('scroll-container');
-    if (container) {
-      const containerHeight = container.offsetHeight;
-      const clickPosition = event.clientY - container.getBoundingClientRect().top;
-      const scrollPercentage = clickPosition / containerHeight;
-      container.scrollTop = scrollPercentage * container.scrollHeight;
-    }
+  const handleViewChange = (newView: 'front' | 'back') => {
+    setView(newView);
+  };
+
+  const handleShinyToggle = () => {
+    setIsShiny(!isShiny);
   };
 
   if (loading) {
@@ -91,11 +91,7 @@ const PokemonDetail: React.FC<PokemonDetailProps> = ({ params }) => {
 
   return (
     <div className="relative p-6 h-screen overflow-hidden">
-      <div
-        id="scroll-container"
-        className="w-full h-full overflow-y-auto pr-10"
-        onClick={handleScroll}
-      >
+      <div className="w-full h-full overflow-y-auto pr-10">
         <div className="w-3/4 flex flex-col space-y-8">
           <Card>
             <CardHeader>
@@ -143,7 +139,7 @@ const PokemonDetail: React.FC<PokemonDetailProps> = ({ params }) => {
                     <div className="mt-4">
                       <div className="flex space-x-4">
                         {pokemonData.types.map((type: any) => (
-                          <Badge key={type.type.name} variant="outline" className={`cursor-pointer hover:bg-gray-300 transition-all`}>
+                          <Badge key={type.type.name} variant="outline" className="cursor-pointer hover:bg-gray-300 transition-all">
                             {type.type.name}
                           </Badge>
                         ))}
@@ -191,60 +187,61 @@ const PokemonDetail: React.FC<PokemonDetailProps> = ({ params }) => {
                       </div>
                     </div>
                   )}
+
+                  {/* Biología y Etimología */}
+                  <div className="mt-6">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Biología y Etimología</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p><strong>Biología:</strong> {pokemonData.species?.flavor_text_entries?.[0]?.flavor_text || 'Información no disponible'}</p>
+                        <p><strong>Etimología:</strong> {pokemonData.species?.etymology || 'Información no disponible'}</p>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Formas Shiny */}
+                  <div className="mt-6 flex space-x-4">
+                    <Button variant="outline" onClick={() => handleViewChange('front')}>De Frente</Button>
+                    <Button variant="outline" onClick={() => handleViewChange('back')}>De Espalda</Button>
+                    <Button variant="outline" onClick={handleShinyToggle}>
+                      {isShiny ? 'Ver Forma Normal' : 'Ver Forma Shiny'}
+                    </Button>
+                  </div>
+
+                  <div className="mt-4">
+                    {view === 'front' && (
+                      <div>
+                        <img
+                          src={isShiny ? pokemonData.sprites.front_shiny : pokemonData.sprites.front_default}
+                          alt="Frontal"
+                          className="w-40 h-40"
+                        />
+                        <p>{isShiny ? 'Frontal Shiny' : 'Frontal'}</p>
+                      </div>
+                    )}
+                    {view === 'back' && (
+                      <div>
+                        <img
+                          src={isShiny ? pokemonData.sprites.back_shiny : pokemonData.sprites.back_default}
+                          alt="Espalda"
+                          className="w-40 h-40"
+                        />
+                        <p>{isShiny ? 'Espalda Shiny' : 'Espalda'}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ) : (
                 <p>No se encontraron datos para este Pokémon.</p>
               )}
-
-             
             </CardContent>
           </Card>
 
-          {/* Generaciones y versiones */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Generaciones y Versiones</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="generation1">
-                <TabsList>
-                  <TabsTrigger value="generation1">Generación 1</TabsTrigger>
-                  <TabsTrigger value="generation2">Generación 2</TabsTrigger>
-                  <TabsTrigger value="generation3">Generación 3</TabsTrigger>
-                  <TabsTrigger value="generation4">Generación 4</TabsTrigger>
-                  <TabsTrigger value="generation5">Generación 5</TabsTrigger>
-                  <TabsTrigger value="generation6">Generación 6</TabsTrigger>
-                </TabsList>
-                <TabsContent value="generation1">
-                  <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/generation-1/${id}.png`} alt="Gen 1 Sprite" className="w-40 h-40" />
-                  <p>Generación 1: Pokémon Azul, Rojo</p>
-                </TabsContent>
-                <TabsContent value="generation2">
-                  <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/generation-2/${id}.png`} alt="Gen 2 Sprite" className="w-40 h-40" />
-                  <p>Generación 2: Pokémon Oro, Plata</p>
-                </TabsContent>
-                <TabsContent value="generation3">
-                  <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/generation-3/${id}.png`} alt="Gen 3 Sprite" className="w-40 h-40" />
-                  <p>Generación 3: Pokémon Rubí, Zafiro</p>
-                </TabsContent>
-                <TabsContent value="generation4">
-                  <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/generation-4/${id}.png`} alt="Gen 4 Sprite" className="w-40 h-40" />
-                  <p>Generación 4: Pokémon Diamante, Perla</p>
-                </TabsContent>
-                <TabsContent value="generation5">
-                  <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/generation-5/${id}.png`} alt="Gen 5 Sprite" className="w-40 h-40" />
-                  <p>Generación 5: Pokémon Negro, Blanco</p>
-                </TabsContent>
-                <TabsContent value="generation6">
-                  <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/generation-6/${id}.png`} alt="Gen 6 Sprite" className="w-40 h-40" />
-                  <p>Generación 6: Pokémon X, Y</p>
-                </TabsContent>
-              </Tabs>
-               <div className="mt-6 flex space-x-4">
-                <Button variant="outline" onClick={handleGoBack}>Volver Atrás</Button>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="mt-6 flex space-x-4">
+            <Button variant="outline" onClick={handleGoBack}>Volver Atrás</Button>
+          </div>
         </div>
       </div>
     </div>
