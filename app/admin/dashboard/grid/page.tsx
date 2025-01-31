@@ -1,3 +1,4 @@
+// components/PokemonGridPage.tsx
 'use client';
 
 import { PokemonCard } from '@/components/pokemon/PokemonCard';
@@ -6,6 +7,7 @@ import { usePokemon } from '@/lib/hooks/usePokemon';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { useRouter } from 'next/router';
 
 export default function PokemonGridPage() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -16,7 +18,7 @@ export default function PokemonGridPage() {
   const offset = (currentPage - 1) * cardsPerPage;
 
   // Obtener los Pokémon de la API con paginación
-  const { pokemon, isLoading, total } = usePokemon(cardsPerPage, offset); // Pasamos limit y offset al hook
+  const { pokemon, isLoading, total } = usePokemon(cardsPerPage, offset);
 
   // Calcular el total de páginas
   const totalPages = Math.ceil(total / cardsPerPage);
@@ -35,6 +37,13 @@ export default function PokemonGridPage() {
     }
   }, [total, isLoading]);
 
+  const router = useRouter();
+
+  // Función que maneja la redirección a la página de batalla
+  const handleGoToBattlePage = (pokemon1: string, pokemon2: string) => {
+    router.push(`/battle?pokemon1=${pokemon1}&pokemon2=${pokemon2}`);
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
@@ -51,7 +60,16 @@ export default function PokemonGridPage() {
       {/* Mostrar Pokémon en la cuadrícula */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {pokemon.map((pokemon) => (
-          <PokemonCard key={pokemon.name} pokemon={pokemon} />
+          <div key={pokemon.name} className="card">
+            <PokemonCard pokemon={pokemon} />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleGoToBattlePage(pokemon.name, 'charizard')} // Aquí 'charizard' es un ejemplo
+            >
+              Ir a la Batalla
+            </Button>
+          </div>
         ))}
       </div>
   
