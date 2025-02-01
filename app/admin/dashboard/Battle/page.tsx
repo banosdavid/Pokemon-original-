@@ -1,4 +1,3 @@
-// pages/battle.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -6,9 +5,9 @@ import { fetchPokemons } from '@/components/fetchPokemons';
 import { combate } from '@/components/combatFunctions';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Select, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectItem, SelectTrigger, SelectValue, SelectContent } from '@/components/ui/select';
 
-// Componente reutilizado de detalles del Pokémon
+// Componente reutilizable para mostrar un Pokémon
 const PokemonCard = ({ pokemon }: { pokemon: any }) => {
   return (
     <Card className="w-64">
@@ -33,8 +32,8 @@ const PokemonCard = ({ pokemon }: { pokemon: any }) => {
 
 const BattlePage = () => {
   const [pokemons, setPokemons] = useState<any[]>([]);
-  const [pokemon1, setPokemon1] = useState<any>(null);
-  const [pokemon2, setPokemon2] = useState<any>(null);
+  const [pokemon1, setPokemon1] = useState<any | null>(null);
+  const [pokemon2, setPokemon2] = useState<any | null>(null);
   const [result, setResult] = useState<string | null>(null);
 
   useEffect(() => {
@@ -46,19 +45,16 @@ const BattlePage = () => {
   }, []);
 
   const handlePokemon1Change = (value: string) => {
-    const selectedPokemon = pokemons.find((p) => p.name === value);
-    setPokemon1(selectedPokemon);
+    setPokemon1(pokemons.find((p) => p.name === value) || null);
   };
 
   const handlePokemon2Change = (value: string) => {
-    const selectedPokemon = pokemons.find((p) => p.name === value);
-    setPokemon2(selectedPokemon);
+    setPokemon2(pokemons.find((p) => p.name === value) || null);
   };
 
   const handleBattle = () => {
     if (pokemon1 && pokemon2) {
-      const resultado = combate(pokemon1, pokemon2);
-      setResult(resultado);
+      setResult(combate(pokemon1, pokemon2));
     }
   };
 
@@ -69,31 +65,33 @@ const BattlePage = () => {
       <div className="mt-4 flex flex-row space-x-4">
         <div>
           <label htmlFor="pokemon1" className="block">Selecciona el primer Pokémon:</label>
-          <Select value={pokemon1 ? pokemon1.name : ''} onValueChange={handlePokemon1Change}>
+          <Select onValueChange={handlePokemon1Change}>
             <SelectTrigger className="p-2 border rounded-md">
               <SelectValue placeholder="Selecciona un Pokémon" />
             </SelectTrigger>
-            <SelectItem value="">Selecciona un Pokémon</SelectItem>
-            {pokemons.map((pokemon) => (
-              <SelectItem key={pokemon.name} value={pokemon.name}>
-                {pokemon.name}
-              </SelectItem>
-            ))}
+            <SelectContent>
+              {pokemons.map((pokemon) => (
+                <SelectItem key={pokemon.name} value={pokemon.name}>
+                  {pokemon.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
           </Select>
         </div>
 
         <div>
           <label htmlFor="pokemon2" className="block">Selecciona el segundo Pokémon:</label>
-          <Select value={pokemon2 ? pokemon2.name : ''} onValueChange={handlePokemon2Change}>
+          <Select onValueChange={handlePokemon2Change}>
             <SelectTrigger className="p-2 border rounded-md">
               <SelectValue placeholder="Selecciona un Pokémon" />
             </SelectTrigger>
-            <SelectItem value="">Selecciona un Pokémon</SelectItem>
-            {pokemons.map((pokemon) => (
-              <SelectItem key={pokemon.name} value={pokemon.name}>
-                {pokemon.name}
-              </SelectItem>
-            ))}
+            <SelectContent>
+              {pokemons.map((pokemon) => (
+                <SelectItem key={pokemon.name} value={pokemon.name}>
+                  {pokemon.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
           </Select>
         </div>
       </div>
