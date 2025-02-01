@@ -11,7 +11,7 @@ const sidebarItems = [
   { title: 'Overview', icon: BarChart3, href: '/admin/dashboard' },
   { title: 'Pokemon List', icon: List, href: '/admin/dashboard/list' },
   { title: 'Grid View', icon: Grid, href: '/admin/dashboard/grid' },
-  { title: 'Battle', icon: Swords, href: '/admin/dashboard/battle' }, // 🔥 Agregado Battle
+  { title: 'Battle', icon: Swords, href: '/admin/dashboard/Battle' }, 
 ];
 
 export function Sidebar() {
