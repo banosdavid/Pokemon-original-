@@ -2,28 +2,27 @@
 
 import { useEffect, useState } from 'react';
 import { fetchPokemons } from '@/components/fetchPokemons';
-import { combate } from '@/components/combatFunctions';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 import { Select, SelectItem, SelectTrigger, SelectValue, SelectContent } from '@/components/ui/select';
+import { getTypeEffectiveness } from '@/components/typeEffectiveness';
 
-// Componente reutilizable para mostrar un Pokémon
 const PokemonCard = ({ pokemon }: { pokemon: any }) => {
+  const spriteUrl = pokemon.sprites.other?.dream_world?.front_default || pokemon.sprites.front_default;
   return (
     <Card className="w-64">
       <CardHeader>
         <CardTitle>{pokemon.name}</CardTitle>
       </CardHeader>
-      <CardContent>
-        <img
-          src={pokemon.sprites.other?.dream_world?.front_default || pokemon.sprites.front_default}
-          alt={pokemon.name}
-          className="w-32 h-32"
-        />
+      <CardContent className="text-center">
+        <img src={spriteUrl} alt={pokemon.name} className="w-32 h-32 mx-auto" />
         <div className="mt-4">
-          <p><strong>HP:</strong> {pokemon.stats.find((stat: any) => stat.stat.name === 'hp')?.base_stat}</p>
-          <p><strong>Attack:</strong> {pokemon.stats.find((stat: any) => stat.stat.name === 'attack')?.base_stat}</p>
-          <p><strong>Defense:</strong> {pokemon.stats.find((stat: any) => stat.stat.name === 'defense')?.base_stat}</p>
+          {pokemon.stats.map((stat: any) => (
+            <p key={stat.stat.name}>
+              <strong>{stat.stat.name.toUpperCase()}:</strong> {stat.base_stat}
+            </p>
+          ))}
         </div>
       </CardContent>
     </Card>
@@ -44,74 +43,109 @@ const BattlePage = () => {
     loadPokemons();
   }, []);
 
-  const handlePokemon1Change = (value: string) => {
-    setPokemon1(pokemons.find((p) => p.name === value) || null);
+  const handlePokemonChange = (value: string, setPokemon: Function) => {
+    setPokemon(pokemons.find((p) => p.name === value) || null);
   };
 
-  const handlePokemon2Change = (value: string) => {
-    setPokemon2(pokemons.find((p) => p.name === value) || null);
-  };
-
-  const handleBattle = () => {
+  const simulateBattle = () => {
     if (pokemon1 && pokemon2) {
-      setResult(combate(pokemon1, pokemon2));
+      // Verificar si los Pokémon son idénticos por ID
+      if (pokemon1.id === pokemon2.id) {
+        setResult('¡Es un empate! Ambos Pokémon son el mismo y no pelean.');
+        return; // Terminar la batalla si tienen la misma ID
+      }
+  
+      // Verificar si los Pokémon son del mismo tipo
+      const types1 = pokemon1.types.map((type: any) => type?.type?.name);
+      const types2 = pokemon2.types.map((type: any) => type?.type?.name);
+  
+      // Verificar si ambos Pokémon tienen los mismos tipos
+      const areSameType = types1.every((type: any) => types2.includes(type));
+  
+      // Si ambos Pokémon son del mismo tipo
+      if (areSameType) {
+        setResult('¡Batalla entre Pokémon del mismo tipo! La victoria depende de las estadísticas.');
+      } else if (pokemon1.name === pokemon2.name) {
+        // Si ambos Pokémon tienen el mismo nombre
+        setResult('¡Es un empate! Ambos Pokémon son iguales.');
+        return; // Finalizar la batalla si son iguales
+      }
+  
+      // Preparar la batalla
+      let hp1 = pokemon1.stats.find((stat: any) => stat.stat.name === 'hp')?.base_stat || 0;
+      let hp2 = pokemon2.stats.find((stat: any) => stat.stat.name === 'hp')?.base_stat || 0;
+      const attack1 = pokemon1.stats.find((stat: any) => stat.stat.name === 'attack')?.base_stat || 0;
+      const attack2 = pokemon2.stats.find((stat: any) => stat.stat.name === 'attack')?.base_stat || 0;
+      const defense1 = pokemon1.stats.find((stat: any) => stat.stat.name === 'defense')?.base_stat || 0;
+      const defense2 = pokemon2.stats.find((stat: any) => stat.stat.name === 'defense')?.base_stat || 0;
+  
+      // Usar efectividad 1 si los Pokémon son del mismo tipo
+      const effectiveness1 = areSameType ? 1 : getTypeEffectiveness(types1, types2);
+      const effectiveness2 = areSameType ? 1 : getTypeEffectiveness(types2, types1);
+  
+      // Calcular el daño total para cada Pokémon sin depender de los turnos
+      const totalDamageToPokemon2 = Math.max((attack1 * effectiveness1) - defense2,0);
+      const totalDamageToPokemon1 = Math.max((attack2 * effectiveness2) - defense1,0);
+  
+      // Calcular los HP restantes después de todo el daño
+      const remainingHP1 = (hp1 - totalDamageToPokemon2);
+      const remainingHP2 = (hp2 - totalDamageToPokemon1);
+  
+      // Determinar el ganador
+      let winner: string;
+  
+      if (remainingHP1 > remainingHP2) {
+        winner = pokemon1.name;
+        setResult(`${pokemon1.name} gana con ${remainingHP1} HP restante.`);
+      } else if (remainingHP2 > remainingHP1) {
+        winner = pokemon2.name;
+        setResult(`${pokemon2.name} gana con ${remainingHP2} HP restante.`);
+      } else {
+        winner = "Ninguno";
+        setResult("¡Es un empate! Ambos Pokémon caen al mismo tiempo.");
+      }
     }
   };
 
+  const handleRestart = () => {
+    setPokemon1(null);
+    setPokemon2(null);
+    setResult(null);
+  };
+
   return (
-    <div className="flex flex-col items-center justify-center p-8">
-      <h1 className="text-3xl font-bold">¡Combate Pokémon!</h1>
+    <div className="flex flex-col items-center p-8">
+      <h1 className="text-3xl font-bold mb-4">¡Combate Pokémon!</h1>
 
-      <div className="mt-4 flex flex-row space-x-4">
-        <div>
-          <label htmlFor="pokemon1" className="block">Selecciona el primer Pokémon:</label>
-          <Select onValueChange={handlePokemon1Change}>
-            <SelectTrigger className="p-2 border rounded-md">
-              <SelectValue placeholder="Selecciona un Pokémon" />
-            </SelectTrigger>
-            <SelectContent>
-              {pokemons.map((pokemon) => (
-                <SelectItem key={pokemon.name} value={pokemon.name}>
-                  {pokemon.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div>
-          <label htmlFor="pokemon2" className="block">Selecciona el segundo Pokémon:</label>
-          <Select onValueChange={handlePokemon2Change}>
-            <SelectTrigger className="p-2 border rounded-md">
-              <SelectValue placeholder="Selecciona un Pokémon" />
-            </SelectTrigger>
-            <SelectContent>
-              {pokemons.map((pokemon) => (
-                <SelectItem key={pokemon.name} value={pokemon.name}>
-                  {pokemon.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      <div className="flex space-x-4 mb-8">
+        {[{ label: 'Primer Pokémon', set: setPokemon1, value: pokemon1 }, { label: 'Segundo Pokémon', set: setPokemon2, value: pokemon2 }].map(({ label, set, value }, index) => (
+          <div key={index}>
+            <Label className="block mb-2">{label}:</Label>
+            <Select onValueChange={(v) => handlePokemonChange(v, set)} value={value?.name || ''}>
+              <SelectTrigger>
+                <SelectValue placeholder={label} />
+              </SelectTrigger>
+              <SelectContent>
+                {pokemons.map((pokemon) => (
+                  <SelectItem key={pokemon.name} value={pokemon.name}>{pokemon.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        ))}
       </div>
 
-      <div className="mt-4 flex space-x-8">
+      <div className="flex space-x-8">
         {pokemon1 && <PokemonCard pokemon={pokemon1} />}
         {pokemon2 && <PokemonCard pokemon={pokemon2} />}
       </div>
 
-      <div className="mt-4">
-        <Button onClick={handleBattle} className="bg-blue-500 text-white rounded-md px-4 py-2">
-          Comenzar Batalla
-        </Button>
+      <div className="mt-4 flex space-x-4">
+        <Button onClick={simulateBattle}>Comenzar Batalla</Button>
+        <Button onClick={handleRestart}>Reiniciar</Button>
       </div>
 
-      {result && (
-        <div className="mt-4">
-          <p>{result}</p>
-        </div>
-      )}
+      {result && <p className="mt-4 text-4xl font-bold text-red-500">{result}</p>}
     </div>
   );
 };

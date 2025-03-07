@@ -7,6 +7,15 @@ import { BarChart3, List, Grid, Swords, LogOut } from 'lucide-react';
 import { PokemonIcon } from '@/components/icons/PokemonIcon';
 import { usePathname, useRouter } from 'next/navigation';
 
+
+
+
+
+
+
+
+
+
 const sidebarItems = [
   { title: 'Overview', icon: BarChart3, href: '/admin/dashboard' },
   { title: 'Pokemon List', icon: List, href: '/admin/dashboard/list' },
@@ -33,20 +42,23 @@ export function Sidebar() {
       {/* Área de Scroll para los botones */}
       <ScrollArea className="h-[calc(100vh-3.5rem)]">
         <div className="flex flex-col gap-2 p-4">
-          {sidebarItems.map(({ title, icon: Icon, href }) => (
-            <Button
-              key={href}
-              variant={pathname === href ? 'secondary' : 'ghost'}
-              className={cn(
-                'w-full justify-start gap-2 transition-all duration-200',
-                pathname === href ? 'bg-primary/10 font-semibold' : 'hover:bg-gray-100'
-              )}
-              onClick={() => router.push(href)}
-            >
-              <Icon className="h-4 w-4" />
-              {title}
-            </Button>
-          ))}
+        {sidebarItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Button
+                key={item.href}
+                variant={pathname === item.href ? 'secondary' : 'ghost'}
+                className={cn(
+                  'w-full justify-start gap-2',
+                  pathname === item.href && 'bg-primary/10'
+                )}
+                onClick={() => router.push(item.href)}
+              >
+                <Icon className="h-4 w-4" />
+                {item.title}
+              </Button>
+            );
+          })}
 
           {/* Botón de Logout */}
           <div className="mt-auto pt-4">
