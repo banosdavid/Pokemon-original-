@@ -65,11 +65,7 @@ const BattlePage = () => {
       // Si ambos Pokémon son del mismo tipo
       if (areSameType) {
         setResult('¡Batalla entre Pokémon del mismo tipo! La victoria depende de las estadísticas.');
-      } else if (pokemon1.name === pokemon2.name) {
-        // Si ambos Pokémon tienen el mismo nombre
-        setResult('¡Es un empate! Ambos Pokémon son iguales.');
-        return; // Finalizar la batalla si son iguales
-      }
+      } 
   
       // Preparar la batalla
       let hp1 = pokemon1.stats.find((stat: any) => stat.stat.name === 'hp')?.base_stat || 0;
@@ -88,21 +84,24 @@ const BattlePage = () => {
       const totalDamageToPokemon1 = Math.max((attack2 * effectiveness2) - defense1,0);
   
       // Calcular los HP restantes después de todo el daño
-      const remainingHP1 = (hp1 - totalDamageToPokemon2);
-      const remainingHP2 = (hp2 - totalDamageToPokemon1);
+      const remainingHP1 = (hp1 - totalDamageToPokemon1);
+      const remainingHP2 = (hp2 - totalDamageToPokemon2);
   
       // Determinar el ganador
       let winner: string;
+      let loserHP: number;
   
       if (remainingHP1 > remainingHP2) {
         winner = pokemon1.name;
-        setResult(`${pokemon1.name} gana con ${remainingHP1} HP restante.`);
+        loserHP = remainingHP2;
+        setResult(`${pokemon1.name} gana con ${remainingHP1} HP restante. ${pokemon2.name} pierde con ${loserHP} HP restante.`);
       } else if (remainingHP2 > remainingHP1) {
         winner = pokemon2.name;
-        setResult(`${pokemon2.name} gana con ${remainingHP2} HP restante.`);
+        loserHP = remainingHP1;
+        setResult(`${pokemon2.name} gana con ${remainingHP2} HP restante. ${pokemon1.name} pierde con ${loserHP} HP restante.`);
       } else {
         winner = "Ninguno";
-        setResult("¡Es un empate! Ambos Pokémon caen al mismo tiempo.");
+        setResult(`¡Es un empate! Ambos Pokémon caen al mismo tiempo con ${remainingHP1} HP restante.`);
       }
     }
   };
