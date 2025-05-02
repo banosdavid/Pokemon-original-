@@ -47,64 +47,114 @@ const BattlePage = () => {
     setPokemon(pokemons.find((p) => p.name === value) || null);
   };
 
-  const simulateBattle = () => {
-    if (pokemon1 && pokemon2) {
-      // Verificar si los Pokémon son idénticos por ID
-      if (pokemon1.id === pokemon2.id) {
-        setResult('¡Es un empate! Ambos Pokémon son el mismo y no pelean.');
-        return; // Terminar la batalla si tienen la misma ID
-      }
-  
-      // Verificar si los Pokémon son del mismo tipo
-      const types1 = pokemon1.types.map((type: any) => type?.type?.name);
-      const types2 = pokemon2.types.map((type: any) => type?.type?.name);
-  
-      // Verificar si ambos Pokémon tienen los mismos tipos
-      const areSameType = types1.every((type: any) => types2.includes(type));
-  
-      // Si ambos Pokémon son del mismo tipo
-      if (areSameType) {
-        setResult('¡Batalla entre Pokémon del mismo tipo! La victoria depende de las estadísticas.');
-      } 
-  
-      // Preparar la batalla
-      let hp1 = pokemon1.stats.find((stat: any) => stat.stat.name === 'hp')?.base_stat || 0;
-      let hp2 = pokemon2.stats.find((stat: any) => stat.stat.name === 'hp')?.base_stat || 0;
-      const attack1 = pokemon1.stats.find((stat: any) => stat.stat.name === 'attack')?.base_stat || 0;
-      const attack2 = pokemon2.stats.find((stat: any) => stat.stat.name === 'attack')?.base_stat || 0;
-      const defense1 = pokemon1.stats.find((stat: any) => stat.stat.name === 'defense')?.base_stat || 0;
-      const defense2 = pokemon2.stats.find((stat: any) => stat.stat.name === 'defense')?.base_stat || 0;
-  
-      // Usar efectividad 1 si los Pokémon son del mismo tipo
-      const effectiveness1 = areSameType ? 1 : getTypeEffectiveness(types1, types2);
-      const effectiveness2 = areSameType ? 1 : getTypeEffectiveness(types2, types1);
-  
-      // Calcular el daño total para cada Pokémon sin depender de los turnos
-      const totalDamageToPokemon2 = Math.max((attack1 * effectiveness1) - defense2,0);
-      const totalDamageToPokemon1 = Math.max((attack2 * effectiveness2) - defense1,0);
-  
-      // Calcular los HP restantes después de todo el daño
-      const remainingHP1 = (hp1 - totalDamageToPokemon1);
-      const remainingHP2 = (hp2 - totalDamageToPokemon2);
-  
-      // Determinar el ganador
-      let winner: string;
-      let loserHP: number;
-  
-      if (remainingHP1 > remainingHP2) {
-        winner = pokemon1.name;
-        loserHP = remainingHP2;
-        setResult(`${pokemon1.name} gana con ${remainingHP1} HP restante. ${pokemon2.name} pierde con ${loserHP} HP restante.`);
-      } else if (remainingHP2 > remainingHP1) {
-        winner = pokemon2.name;
-        loserHP = remainingHP1;
-        setResult(`${pokemon2.name} gana con ${remainingHP2} HP restante. ${pokemon1.name} pierde con ${loserHP} HP restante.`);
-      } else {
-        winner = "Ninguno";
-        setResult(`¡Es un empate! Ambos Pokémon caen al mismo tiempo con ${remainingHP1} HP restante.`);
-      }
-    }
+  const simulateBattle = async () => {
+  if (!pokemon1 || !pokemon2) return;
+
+  if (pokemon1.id === pokemon2.id) {
+    setResult('¡Es un empate! Ambos Pokémon son el mismo y no pelean.');
+    return;
+  }
+
+  const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+
+  const types1 = pokemon1.types.map((type: any) => type?.type?.name);
+  const types2 = pokemon2.types.map((type: any) => type?.type?.name);
+  const areSameType = types1.every((type: any) => types2.includes(type));
+
+  let hp1 = pokemon1.stats.find((stat: any) => stat.stat.name === 'hp')?.base_stat || 0;
+  let hp2 = pokemon2.stats.find((stat: any) => stat.stat.name === 'hp')?.base_stat || 0;
+  const attack1 = pokemon1.stats.find((stat: any) => stat.stat.name === 'attack')?.base_stat || 0;
+  const attack2 = pokemon2.stats.find((stat: any) => stat.stat.name === 'attack')?.base_stat || 0;
+  const defense1 = pokemon1.stats.find((stat: any) => stat.stat.name === 'defense')?.base_stat || 0;
+  const defense2 = pokemon2.stats.find((stat: any) => stat.stat.name === 'defense')?.base_stat || 0;
+  const speed1 = pokemon1.stats.find((stat: any) => stat.stat.name === 'speed')?.base_stat || 0;
+  const speed2 = pokemon2.stats.find((stat: any) => stat.stat.name === 'speed')?.base_stat || 0;
+
+  const effectiveness1 = areSameType ? 1 : getTypeEffectiveness(types1, types2);
+  const effectiveness2 = areSameType ? 1 : getTypeEffectiveness(types2, types1);
+
+  const log = (msg: string) => {
+    setResult(prev => (prev ? prev + "\n" + msg : msg));
   };
+
+  const multiplier = 10;
+
+  setResult("");
+  log("¡La batalla comienza!");
+  await delay(1000);
+
+  const first = speed1 >= speed2 ? 'pokemon1' : 'pokemon2';
+
+  while (hp1 > 0 && hp2 > 0) {
+    if (first === 'pokemon1') {
+      const dmg2 = Math.max(((attack1 * effectiveness1) / defense2) * multiplier, 1);
+      hp2 -= dmg2;
+      log(`${pokemon1.name} ataca a ${pokemon2.name} y causa ${dmg2.toFixed(1)} de daño`);
+      await delay(1000);
+      if (hp2 <= 0) break;
+
+      const dmg1 = Math.max(((attack2 * effectiveness2) / defense1) * multiplier, 1);
+      hp1 -= dmg1;
+      log(`${pokemon2.name} ataca a ${pokemon1.name} y causa ${dmg1.toFixed(1)} de daño`);
+      await delay(1000);
+    } else {
+      const dmg1 = Math.max(((attack2 * effectiveness2) / defense1) * multiplier, 1);
+      hp1 -= dmg1;
+      log(`${pokemon2.name} ataca a ${pokemon1.name} y causa ${dmg1.toFixed(1)} de daño`);
+      await delay(1000);
+      if (hp1 <= 0) break;
+
+      const dmg2 = Math.max(((attack1 * effectiveness1) / defense2) * multiplier, 1);
+      hp2 -= dmg2;
+      log(`${pokemon1.name} ataca a ${pokemon2.name} y causa ${dmg2.toFixed(1)} de daño`);
+      await delay(1000);
+    }
+  }
+
+  // Resultado final
+  if (hp1 > 0 && hp2 <= 0) {
+    log(`${pokemon1.name} gana con ${hp1.toFixed(1)} HP restante. ${pokemon2.name} pierde con 0 HP.`);
+  } else if (hp2 > 0 && hp1 <= 0) {
+    log(`${pokemon2.name} gana con ${hp2.toFixed(1)} HP restante. ${pokemon1.name} pierde con 0 HP.`);
+  } else {
+    log(`¡Es un empate! Ambos Pokémon cayeron.`);
+  }
+
+  const extractStats = (pokemon: any) => {
+    const get = (name: string) =>
+      pokemon.stats.find((s: any) => s.stat.name === name)?.base_stat || 0;
+    return {
+      hp: get('hp'),
+      attack: get('attack'),
+      defense: get('defense'),
+      specialAttack: get('special-attack'),
+      specialDefense: get('special-defense'),
+      speed: get('speed'),
+    };
+  };
+  
+  const guardarBatalla = async () => {
+    const winner = hp1 > 0 && hp2 <= 0 ? pokemon1.name :
+                   hp2 > 0 && hp1 <= 0 ? pokemon2.name : 'Empate';
+  
+    await fetch('/api/battle/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        player1: { name: pokemon1.name, stats: extractStats(pokemon1) },
+        player2: { name: pokemon2.name, stats: extractStats(pokemon2) },
+        winner,
+        battleLog: result?.split('\n') || [],
+      }),
+    });
+  };
+  
+  guardarBatalla();
+  
+};
+
+
+  
 
   const handleRestart = () => {
     setPokemon1(null);
@@ -144,7 +194,9 @@ const BattlePage = () => {
         <Button onClick={handleRestart}>Reiniciar</Button>
       </div>
 
-      {result && <p className="mt-4 text-4xl font-bold text-red-500">{result}</p>}
+      <pre style={{ whiteSpace: "pre-wrap", background: "#f0f0f0", padding: "1rem", borderRadius: "8px", marginTop: "1rem" }}>
+  {result}
+</pre>
     </div>
   );
 };

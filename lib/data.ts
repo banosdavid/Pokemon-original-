@@ -1,3 +1,4 @@
+// data.ts
 import { Pokemon } from './types';
 
 export async function fetchPokemonData(limit: number, offset: number): Promise<{ results: Pokemon[], count: number }> {
@@ -13,7 +14,6 @@ export async function fetchPokemonData(limit: number, offset: number): Promise<{
 
     const results = await Promise.all(promises);
 
-    // El total de Pokémon
     const count = data.count;
 
     return {
@@ -31,7 +31,7 @@ export async function fetchPokemonData(limit: number, offset: number): Promise<{
         },
         imageUrl: data.sprites.other['official-artwork'].front_default,
       })),
-      count: count, // El total de Pokémon
+      count: count,
     };
   } catch (error) {
     console.error('Error fetching Pokemon data:', error);

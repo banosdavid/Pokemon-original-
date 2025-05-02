@@ -10,12 +10,6 @@ import { usePathname, useRouter } from 'next/navigation';
 
 
 
-
-
-
-
-
-
 const sidebarItems = [
   { title: 'Overview', icon: BarChart3, href: '/admin/dashboard' },
   { title: 'Pokemon List', icon: List, href: '/admin/dashboard/list' },

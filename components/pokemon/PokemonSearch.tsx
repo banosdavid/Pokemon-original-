@@ -8,7 +8,6 @@ interface PokemonSearchProps {
 
 export function PokemonSearch({
   selectedType,
-  onTypeChange,
   types,
 }: PokemonSearchProps) {
   return (
@@ -17,7 +16,7 @@ export function PokemonSearch({
       <select
         className="border rounded-md px-3 py-2"
         value={selectedType}
-        onChange={(e) => onTypeChange(e.target.value)}
+        onChange={(e) =>(e.target.value)}
       >
         <option value="all">All Types</option>
         {types.map((type) => (
