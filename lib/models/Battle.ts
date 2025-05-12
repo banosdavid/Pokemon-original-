@@ -23,5 +23,5 @@ const BattleSchema = new Schema({
   },
 });
 
-// ⚠️ Esto es clave: si quieres que la colección sea exactamente "PokemonBattle":
+
 export default models.PokemonBattle || model('PokemonBattle', BattleSchema);

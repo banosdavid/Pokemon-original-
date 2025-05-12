@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectItem, SelectTrigger, SelectValue, SelectContent } from '@/components/ui/select';
 import { getTypeEffectiveness } from '@/components/typeEffectiveness';
-import { uploadStreamToFtp } from '@lib/ftpClientStream';
+
 
 const PokemonCard = ({ pokemon }: { pokemon: any }) => {
   const spriteUrl = pokemon.sprites.other?.dream_world?.front_default || pokemon.sprites.front_default;
@@ -44,45 +44,45 @@ const BattlePage = () => {
     loadPokemons();
   }, []);
 
-  useEffect(() => {
-    const subirSeleccion = async () => {
-      if (
-        !pokemon1?.name ||
-        !pokemon2?.name ||
-        !pokemon1?.types ||
-        !pokemon2?.types
-      )
-        return;
-  
-      const data = {
-        pokemon1: {
-          name: pokemon1.name,
-          stats: pokemon1.stats || [],
-          types: pokemon1.types.map((t: any) => t?.type?.name) || [],
-        },
-        pokemon2: {
-          name: pokemon2.name,
-          stats: pokemon2.stats || [],
-          types: pokemon2.types.map((t: any) => t?.type?.name) || [],
-        },
-        fecha: new Date().toISOString(),
-      };
-  
-      try {
-        await fetch("/api/ftp/upload", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        });
-        console.log("✅ Selección subida");
-      } catch (err) {
-        console.error("❌ Error al subir selección:", err);
-      }
+useEffect(() => {
+  const subirSeleccion = async () => {
+    if (
+      !pokemon1?.name ||
+      !pokemon2?.name ||
+      !pokemon1?.types ||
+      !pokemon2?.types
+    )
+      return;
+
+    const data = {
+      pokemon1: {
+        name: pokemon1.name,
+        stats: pokemon1.stats || [],
+        types: pokemon1.types.map((t: any) => t?.type?.name) || [],
+      },
+      pokemon2: {
+        name: pokemon2.name,
+        stats: pokemon2.stats || [],
+        types: pokemon2.types.map((t: any) => t?.type?.name) || [],
+      },
+      fecha: new Date().toISOString(),
     };
-  
-    subirSeleccion();
-  }, [pokemon1, pokemon2]);
-  
+
+    try {
+      await fetch("/api/ftp/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      console.log("✅ Selección subida");
+    } catch (err) {
+      console.error("❌ Error al subir selección:", err);
+    }
+  };
+
+  subirSeleccion();
+}, [pokemon1, pokemon2]);
+
 
   const handlePokemonChange = (value: string, setPokemon: Function) => {
     setPokemon(pokemons.find((p) => p.name === value) || null);
