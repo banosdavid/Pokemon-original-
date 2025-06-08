@@ -16,26 +16,35 @@ export function LoginForm() {
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
+  e.preventDefault();
+  setIsLoading(true);
+  setError('');
 
-    try {
-      if (validateCredentials(username, password)) {
-        const token = createToken(username);
-        localStorage.setItem('auth_token', token);
-        router.refresh();
-        router.push('/admin/dashboard');
-      } else {
-        setError('Invalid credentials');
-      }
-    } catch (err) {
-      console.error('Login error:', err);
-      setError('An error occurred. Please try again.');
-    } finally {
-      setIsLoading(false);
+  try {
+    const response = await fetch('/api/auth/ldap', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+
+    const data = await response.json();
+
+    if (response.ok && data.success) {
+      const token = createToken(username); // Reutilizas tu token
+      localStorage.setItem('auth_token', token);
+      router.refresh();
+      router.push('/admin/dashboard');
+    } else {
+      setError(data.message || 'Credenciales inválidas');
     }
-  };
+  } catch (err) {
+    console.error('Login error:', err);
+    setError('Ha ocurrido un error. Inténtalo de nuevo.');
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   return (
     <Card className="w-full max-w-md">

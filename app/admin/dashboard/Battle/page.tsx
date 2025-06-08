@@ -35,6 +35,8 @@ const BattlePage = () => {
   const [pokemon1, setPokemon1] = useState<any | null>(null);
   const [pokemon2, setPokemon2] = useState<any | null>(null);
   const [result, setResult] = useState<string | null>(null);
+  const [winner, setWinner] = useState<string | null>(null);
+
 
   useEffect(() => {
     const loadPokemons = async () => {
@@ -114,11 +116,27 @@ useEffect(() => {
   const effectiveness1 = areSameType ? 1 : getTypeEffectiveness(types1, types2);
   const effectiveness2 = areSameType ? 1 : getTypeEffectiveness(types2, types1);
 
+  let logMessages: string[] = [];
+
   const log = (msg: string) => {
+    logMessages.push(msg);
     setResult(prev => (prev ? prev + "\n" + msg : msg));
   };
+  
+  const randomMultiplier = () => {
+    const base = 8 + Math.random() * 4;
+    return base;
+  };
 
-  const multiplier = 10;
+ const calculateDamage = (
+    attack: number,
+    defense: number,
+    effectiveness: number
+  ) => {
+    const multiplier = randomMultiplier();
+    const damage = ((attack * effectiveness) / (defense + 1)) * multiplier;
+    return Math.max(damage, 1);  };
+  
 
   setResult("");
   log("¡La batalla comienza!");
@@ -128,38 +146,44 @@ useEffect(() => {
 
   while (hp1 > 0 && hp2 > 0) {
     if (first === 'pokemon1') {
-      const dmg2 = Math.max(((attack1 * effectiveness1) / defense2) * multiplier, 1);
+      
+      const dmg2 = calculateDamage(attack1, defense2, effectiveness1);
       hp2 -= dmg2;
       log(`${pokemon1.name} ataca a ${pokemon2.name} y causa ${dmg2.toFixed(1)} de daño`);
       await delay(1000);
       if (hp2 <= 0) break;
-
-      const dmg1 = Math.max(((attack2 * effectiveness2) / defense1) * multiplier, 1);
+  
+      const dmg1 = calculateDamage(attack2, defense1, effectiveness2);
       hp1 -= dmg1;
       log(`${pokemon2.name} ataca a ${pokemon1.name} y causa ${dmg1.toFixed(1)} de daño`);
       await delay(1000);
     } else {
-      const dmg1 = Math.max(((attack2 * effectiveness2) / defense1) * multiplier, 1);
+     
+      const dmg1 = calculateDamage(attack2, defense1, effectiveness2);
       hp1 -= dmg1;
       log(`${pokemon2.name} ataca a ${pokemon1.name} y causa ${dmg1.toFixed(1)} de daño`);
       await delay(1000);
       if (hp1 <= 0) break;
-
-      const dmg2 = Math.max(((attack1 * effectiveness1) / defense2) * multiplier, 1);
+  
+      const dmg2 = calculateDamage(attack1, defense2, effectiveness1);
       hp2 -= dmg2;
       log(`${pokemon1.name} ataca a ${pokemon2.name} y causa ${dmg2.toFixed(1)} de daño`);
       await delay(1000);
     }
   }
+  
 
-  // Resultado final
   if (hp1 > 0 && hp2 <= 0) {
     log(`${pokemon1.name} gana con ${hp1.toFixed(1)} HP restante. ${pokemon2.name} pierde con 0 HP.`);
+    setWinner(pokemon1.name);
   } else if (hp2 > 0 && hp1 <= 0) {
     log(`${pokemon2.name} gana con ${hp2.toFixed(1)} HP restante. ${pokemon1.name} pierde con 0 HP.`);
+    setWinner(pokemon2.name);
   } else {
     log(`¡Es un empate! Ambos Pokémon cayeron.`);
+    setWinner("Empate");
   }
+  
 
   const extractStats = (pokemon: any) => {
     const get = (name: string) =>
@@ -185,10 +209,11 @@ useEffect(() => {
         player1: { name: pokemon1.name, stats: extractStats(pokemon1) },
         player2: { name: pokemon2.name, stats: extractStats(pokemon2) },
         winner,
-        battleLog: result?.split('\n') || [],
+        battleLog: logMessages,
       }),
     });
   };
+  
   
   guardarBatalla();
   
@@ -201,6 +226,7 @@ useEffect(() => {
     setPokemon1(null);
     setPokemon2(null);
     setResult(null);
+    setWinner(null);
   };
 
   return (
@@ -208,7 +234,8 @@ useEffect(() => {
       <h1 className="text-3xl font-bold mb-4">¡Combate Pokémon!</h1>
 
       <div className="flex space-x-4 mb-8">
-        {[{ label: 'Primer Pokémon', set: setPokemon1, value: pokemon1 }, { label: 'Segundo Pokémon', set: setPokemon2, value: pokemon2 }].map(({ label, set, value }, index) => (
+        {[{ label: 'Primer Pokémon', set: setPokemon1, value: pokemon1 }, 
+        { label: 'Segundo Pokémon', set: setPokemon2, value: pokemon2 }].map(({ label, set, value }, index) => (
           <div key={index}>
             <Label className="block mb-2">{label}:</Label>
             <Select onValueChange={(v) => handlePokemonChange(v, set)} value={value?.name || ''}>
@@ -234,8 +261,12 @@ useEffect(() => {
         <Button onClick={simulateBattle}>Comenzar Batalla</Button>
         <Button onClick={handleRestart}>Reiniciar</Button>
       </div>
-
-      <pre style={{ whiteSpace: "pre-wrap", background: "#f0f0f0", padding: "1rem", borderRadius: "8px", marginTop: "1rem" }}>
+      {winner && (
+  <h2 className="text-4xl font-bold text-green-600 mt-6">
+    🏆 Ganador: {winner.toUpperCase()}
+  </h2>
+)}
+   <pre style={{ whiteSpace: "pre-wrap", background: "#f0f0f0", padding: "1rem", borderRadius: "8px", marginTop: "1rem" }}>
   {result}
 </pre>
     </div>

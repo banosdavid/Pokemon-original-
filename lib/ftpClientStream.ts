@@ -5,7 +5,7 @@ export async function uploadStreamToFtp(jsonText: string, remotePath: string) {
   const client = new Client();
   try {
     await client.access({
-      host: "192.168.1.23",
+      host: "192.168.1.15",
       user: "pokemonuser",
       password: "Elaleman0305Pokemon",
       secure: false,

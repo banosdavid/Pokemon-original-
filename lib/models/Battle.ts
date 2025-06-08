@@ -2,6 +2,7 @@ import mongoose, { Schema, model, models } from 'mongoose';
 
 const PokemonSchema = new Schema({
   name: String,
+  types: [String],
   stats: {
     hp: Number,
     attack: Number,
@@ -23,5 +24,5 @@ const BattleSchema = new Schema({
   },
 });
 
-
 export default models.PokemonBattle || model('PokemonBattle', BattleSchema);
+
