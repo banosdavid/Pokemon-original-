@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
   const { username, password } = await req.json();
 
   const client = ldap.createClient({
-    url: 'ldap://192.168.1.20',
+    url: 'ldap://192.168.3.60',
   });
 
   const dn = `uid=${username},ou=usuarios,dc=pokemon,dc=local`;
